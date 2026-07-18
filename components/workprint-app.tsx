@@ -4,585 +4,464 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Clock,
-  Code,
-  Copy,
-  DownloadSimple,
-  FileText,
-  GitBranch,
-  Image as ImageIcon,
-  LockSimple,
+  GithubLogo,
+  LinkedinLogo,
   NotePencil,
-  Paperclip,
-  ShieldCheck,
-  Stack,
+  OpenAiLogo,
   X,
+  XLogo,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChangeEvent, useEffect, useId, useRef, useState } from "react";
-import { SAMPLE_ANALYSIS, createSampleDraft } from "@/lib/sample-data";
-import type { AnalysisResult, Evidence, StoryDraft, StoryMoment } from "@/lib/types";
+import { FormEvent, useMemo, useState } from "react";
+import { SAMPLE_ANALYSIS } from "@/lib/sample-data";
 
-type Stage = "welcome" | "source" | "analyzing" | "inbox" | "reflect" | "drafting" | "studio";
-interface SourceFile { name: string; type: "text" | "image"; content: string; size: string }
+type Screen = "setup" | "catching-up" | "inbox" | "post";
+type Platform = "x" | "linkedin";
+type Provider = "openrouter" | "google";
 
-const SAMPLE_SOURCE = `commit 8f21c3a
-Author: Vedant
-Date: Jul 18 10:42
+interface Claim {
+  id: string;
+  text: string;
+  evidenceIds: string[];
+}
 
-Replace blank composer with detected moments
+interface Moment {
+  id: string;
+  title: string;
+  summary: string;
+  recommended: Platform;
+  question: string;
+  drafts: Record<Platform, string>;
+  alternateOpenings: Record<Platform, string>;
+  claims: Claim[];
+}
 
-Removed prompt-first home screen and added a private inbox that ranks story moments before writing.
+interface RevisionMessage {
+  role: "You" | "Workprint";
+  text: string;
+}
 
-Codex session 10:19
-A generic post generator makes the user do the hardest work: deciding what mattered. The interface should begin after that decision has been made for them.
+const MOMENTS: Moment[] = [
+  {
+    id: "moment-pivot",
+    title: "The story inbox replaced the blank composer.",
+    summary: "A commit, a Codex session, and a product note all point to the same change.",
+    recommended: "x",
+    question: "What made you decide to remove the prompt box?",
+    drafts: {
+      x: "spent most of today deleting a text box lol.\n\nworkprint used to ask what you wanted to post about. pretty ridiculous for a product that is supposed to notice the interesting stuff for you.\n\nnow it opens with 3 moments from my commits + codex sessions.",
+      linkedin: "Spent most of today deleting a text box.\n\nWorkprint used to open with a blank prompt: ‘What do you want to post about?’\n\nIt took me an embarrassingly long time to notice how backwards that was. If you already know what is worth sharing, half the job is done.\n\nSo I changed the flow. Workprint now reads commits and Codex sessions, pulls out a few moments that might be worth talking about, and lets you pick one.\n\nStill rough, but this is the first version that feels like the product I had in my head.",
+    },
+    alternateOpenings: {
+      x: "turns out the prompt box was the problem.",
+      linkedin: "The most important thing I removed from Workprint this week was its starting point.",
+    },
+    claims: [
+      { id: "claim-pivot", text: "The story inbox replaced the blank composer.", evidenceIds: ["ev-commit-inbox", "ev-codex-pivot"] },
+      { id: "claim-proof", text: "Generated claims can be traced back to their source.", evidenceIds: ["ev-commit-proof"] },
+      { id: "claim-boundary", text: "Workprint asks instead of inventing the builder’s perspective.", evidenceIds: ["ev-codex-trust"] },
+    ],
+  },
+  {
+    id: "moment-proof",
+    title: "Evidence now survives every rewrite.",
+    summary: "Generated claims can be traced back to the work that produced them.",
+    recommended: "linkedin",
+    question: "Was there a particular bad draft that made you add evidence?",
+    drafts: {
+      x: "added a tiny ‘why is this true?’ button to workprint today.\n\nclick it and you get the commit/session behind each claim in the draft.\n\nmostly built this because ai writing tools are way too good at making made-up details sound completely normal.",
+      linkedin: "Added a small evidence view to Workprint today.\n\nYou can click any factual claim in a draft and see the commit, Codex session, or note behind it.\n\nI mostly built this after seeing a draft confidently include a detail that sounded right but was not actually in the work. That is a dangerous failure mode for a product that is meant to save you time.\n\nNow, if Workprint can see what changed but cannot know why it mattered, it asks instead of guessing.\n\nIt is a small part of the UI, but it makes me much more comfortable using the output.",
+    },
+    alternateOpenings: {
+      x: "ai drafts are nicer when you can check where the facts came from.",
+      linkedin: "The feature that made me trust Workprint was not the writing. It was the receipts.",
+    },
+    claims: [
+      { id: "claim-evidence", text: "Every factual claim keeps its evidence.", evidenceIds: ["ev-commit-proof", "ev-codex-trust"] },
+      { id: "claim-artifacts", text: "Evidence can come from commits, sessions, screenshots, or notes.", evidenceIds: ["ev-commit-inbox", "ev-note-emotion"] },
+    ],
+  },
+  {
+    id: "moment-craft",
+    title: "The onboarding lost three screens.",
+    summary: "GitHub and Codex are detected once. After that, Workprint stays out of the way.",
+    recommended: "x",
+    question: "What finally convinced you to delete the project setup?",
+    drafts: {
+      x: "deleted basically all of workprint’s onboarding today.\n\nbefore: create a project, describe it, connect sources, start logging updates.\n\nnow: it finds github + codex, you click connect, and it starts catching up.\n\nwild how much product design is just admitting the user should not have to do your setup work.",
+      linkedin: "I deleted most of Workprint’s onboarding today.\n\nThe old version asked you to create a project, describe what you were building, connect your tools, and start logging progress.\n\nEvery step seemed reasonable while I was building it. Together, they made Workprint feel like another project management tool you had to maintain.\n\nNow it finds GitHub and Codex on the device, you confirm once, and it starts catching up. The next screen already has a few things worth posting.\n\nMuch less impressive as an onboarding flow. Much better as a product.",
+    },
+    alternateOpenings: {
+      x: "today’s progress: deleted most of the onboarding.",
+      linkedin: "The best onboarding change I made was removing most of the onboarding.",
+    },
+    claims: [
+      { id: "claim-setup", text: "The onboarding no longer needs project setup or manual logs.", evidenceIds: ["ev-commit-inbox", "ev-codex-pivot"] },
+      { id: "claim-fallback", text: "The complete demo can run without an API key.", evidenceIds: ["ev-commit-fallback"] },
+    ],
+  },
+];
 
-commit 4bc91d8
-Date: Jul 18 12:06
-
-Attach evidence to every generated claim
-
-Added claim-level references and an evidence drawer.
-
-Codex session 11:31
-The model may infer that a change is interesting. It may not infer what the builder felt or learned. Ask for that missing perspective.`;
-
-const stageLabels: Partial<Record<Stage, string>> = {
-  source: "Add work",
-  analyzing: "Analyzing",
-  inbox: "Story Inbox",
-  reflect: "Reflection",
-  drafting: "Writing",
-  studio: "Story Studio",
-};
-
-function Brand() {
+function WorkprintMark() {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="grid size-7 place-items-center rounded-[8px] bg-[var(--text)] text-[var(--background)]">
-        <Stack size={14} weight="fill" />
-      </span>
-      <span className="text-sm font-semibold tracking-[-0.02em]">Workprint</span>
-    </div>
+    <span className="wp-mark" aria-hidden="true">
+      <i /><i /><i />
+    </span>
   );
 }
 
-function Header({ stage, project, onReset }: { stage: Stage; project?: string; onReset: () => void }) {
+function Header({ onHome, onProfile }: { onHome: () => void; onProfile: () => void }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_92%,transparent)] backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
-        <button onClick={onReset} aria-label="Return to Workprint home" className="rounded-[8px]">
-          <Brand />
-        </button>
-        {stage !== "welcome" && (
-          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 text-xs md:flex">
-            <span className="font-medium">{project || "Untitled"}</span>
-            <span className="text-[var(--text-tertiary)]">/</span>
-            <span className="text-[var(--text-secondary)]">{stageLabels[stage]}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
-          <LockSimple size={13} />
-          <span className="hidden sm:inline">Private</span>
-        </div>
-      </div>
+    <header className="wp-header">
+      <button className="wp-brand" type="button" onClick={onHome} aria-label="Open Workprint home">
+        <WorkprintMark />
+        <span>workprint</span>
+      </button>
+      <button className="wp-profile" type="button" onClick={onProfile} aria-label="Open profile and settings" title="Profile and settings">V</button>
     </header>
   );
 }
 
-function Welcome({ onDemo, onStart }: { onDemo: () => void; onStart: () => void }) {
-  const reduce = useReducedMotion();
+function Setup({ selected, onToggle, onContinue }: { selected: Record<string, boolean>; onToggle: (source: string) => void; onContinue: () => void }) {
   return (
-    <main className="mx-auto flex min-h-[calc(100dvh-56px)] max-w-3xl items-center px-5 py-16">
-      <motion.section
-        initial={reduce ? false : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full"
-      >
-        <h1 className="max-w-2xl text-[clamp(2.75rem,7vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.055em]">
-          Find the story in your work.
-        </h1>
-        <p className="mt-6 max-w-lg text-[17px] leading-7 text-[var(--text-secondary)]">
-          Workprint notices what mattered, asks for your perspective, and shows the evidence behind every claim.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button className="button-primary" onClick={onStart}>Add your work <ArrowRight size={14} weight="bold" /></button>
-          <button className="button-ghost" onClick={onDemo}>Try the Workprint demo</button>
+    <main className="wp-screen wp-setup">
+      <section className="wp-setup-copy">
+        <span className="wp-signal-rule" aria-hidden="true" />
+        <h1>Your next post is already in your work.</h1>
+        <p>Workprint finds it for you.</p>
+      </section>
+
+      <section className="wp-source-picker" aria-label="Work sources found">
+        <div className="wp-source-intro">
+          <strong>Ready to connect</strong>
+          <span>Both were found on this device.</span>
         </div>
-      </motion.section>
-    </main>
-  );
-}
-
-function SourceSetup({
-  projectName, setProjectName, sourceText, setSourceText, files, setFiles, onAnalyze, onDemo,
-}: {
-  projectName: string;
-  setProjectName: (value: string) => void;
-  sourceText: string;
-  setSourceText: (value: string) => void;
-  files: SourceFile[];
-  setFiles: (files: SourceFile[]) => void;
-  onAnalyze: () => void;
-  onDemo: () => void;
-}) {
-  const textInput = useRef<HTMLInputElement>(null);
-  const imageInput = useRef<HTMLInputElement>(null);
-  const ready = projectName.trim().length > 0 && (sourceText.trim().length >= 40 || files.some((file) => file.type === "image"));
-
-  async function addFiles(event: ChangeEvent<HTMLInputElement>, kind: "text" | "image") {
-    const picked = Array.from(event.target.files || []).slice(0, kind === "image" ? 3 : 4);
-    const next = await Promise.all(picked.map(async (file) => ({
-      name: file.name,
-      type: kind,
-      content: await readFile(file, kind === "image"),
-      size: formatBytes(file.size),
-    } satisfies SourceFile)));
-    setFiles([...files, ...next].slice(0, 6));
-    if (kind === "text") setSourceText([sourceText, ...next.map((file) => file.content)].filter(Boolean).join("\n\n"));
-    event.target.value = "";
-  }
-
-  return (
-    <main className="mx-auto max-w-3xl px-5 py-12 md:py-16">
-      <div className="mb-9">
-        <h1 className="text-3xl font-semibold tracking-[-0.04em] md:text-4xl">Add your work</h1>
-        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">Paste a Git or Codex export. You can also attach notes and screenshots.</p>
-      </div>
-
-      <section className="space-y-6">
-        <div>
-          <label className="mb-2 block text-[13px] font-medium" htmlFor="project-name">Project name</label>
-          <input id="project-name" className="field" value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Workprint" />
-        </div>
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <label className="text-[13px] font-medium" htmlFor="source-text">Work history</label>
-            <button className="text-xs text-[var(--text-secondary)] hover:text-[var(--text)]" onClick={() => { setProjectName("Workprint"); setSourceText(SAMPLE_SOURCE); }}>Use example text</button>
-          </div>
-          <textarea
-            id="source-text"
-            className="field min-h-64 resize-y font-mono text-[12px] leading-6"
-            value={sourceText}
-            onChange={(event) => setSourceText(event.target.value)}
-            placeholder={"Paste git log --stat, a Codex export, release notes, or work notes."}
-          />
-        </div>
-
-        <div>
-          <p className="mb-2 text-[13px] font-medium">Attachments</p>
-          <div className="flex flex-wrap gap-2">
-            <button className="button-secondary" onClick={() => textInput.current?.click()}><FileText size={14} /> Add files</button>
-            <button className="button-secondary" onClick={() => imageInput.current?.click()}><ImageIcon size={14} /> Add screenshots</button>
-            <input ref={textInput} className="sr-only" type="file" multiple accept=".txt,.md,.json,.log,.patch,.diff" onChange={(event) => void addFiles(event, "text")} />
-            <input ref={imageInput} className="sr-only" type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={(event) => void addFiles(event, "image")} />
-          </div>
-          {files.length > 0 && (
-            <div className="mt-3 divide-y divide-[var(--border)] rounded-[10px] border border-[var(--border)]">
-              {files.map((file, index) => (
-                <div key={`${file.name}-${file.size}`} className="flex items-center gap-3 px-3 py-2.5">
-                  {file.type === "image" ? <ImageIcon size={15} className="text-[var(--text-tertiary)]" /> : <Code size={15} className="text-[var(--text-tertiary)]" />}
-                  <span className="min-w-0 flex-1 truncate text-xs">{file.name}</span>
-                  <span className="text-[10px] text-[var(--text-tertiary)]">{file.size}</span>
-                  <button onClick={() => setFiles(files.filter((_, item) => item !== index))} aria-label={`Remove ${file.name}`} className="text-[var(--text-tertiary)] hover:text-[var(--text)]"><X size={14} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]"><LockSimple size={13} /> Nothing is published without approval.</div>
-          <button className="button-primary" disabled={!ready} onClick={onAnalyze}>Find story moments <ArrowRight size={14} weight="bold" /></button>
-        </div>
-        <button className="mx-auto block text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]" onClick={onDemo}>Or continue with the demo project</button>
+        <button className="wp-source-row" type="button" aria-pressed={selected.github} onClick={() => onToggle("github")}>
+          <span className="wp-source-icon"><GithubLogo size={20} weight="fill" /></span>
+          <span><strong>GitHub</strong><small>Commits and pull requests</small></span>
+          <Check size={17} weight="bold" className="wp-check" />
+        </button>
+        <button className="wp-source-row" type="button" aria-pressed={selected.codex} onClick={() => onToggle("codex")}>
+          <span className="wp-source-icon"><OpenAiLogo size={20} /></span>
+          <span><strong>Codex</strong><small>Sessions and decisions</small></span>
+          <Check size={17} weight="bold" className="wp-check" />
+        </button>
+        <button className="wp-primary wp-connect" type="button" onClick={onContinue} disabled={!selected.github && !selected.codex}>
+          Connect and continue <ArrowRight size={15} weight="bold" />
+        </button>
+        <button className="wp-text-button" type="button">Use something else</button>
       </section>
     </main>
   );
 }
 
-function AnalysisLoader({ project }: { project: string }) {
-  const [step, setStep] = useState(0);
-  const steps = ["Reconstructing the timeline", "Finding meaningful changes", "Checking the evidence"];
-
-  useEffect(() => {
-    const interval = setInterval(() => setStep((current) => Math.min(current + 1, 2)), 850);
-    return () => clearInterval(interval);
-  }, []);
-
+function CatchingUp() {
   return (
-    <main className="mx-auto flex min-h-[calc(100dvh-56px)] max-w-xl items-center px-5 py-16">
-      <section className="w-full">
-        <div className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-[-0.03em]">Reading {project || "your work"}</h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">This usually takes a few seconds.</p>
-        </div>
-        <div className="space-y-4">
-          {steps.map((label, index) => (
-            <div key={label} className={`flex items-center gap-3 text-sm transition-opacity ${index <= step ? "opacity-100" : "opacity-35"}`}>
-              <span className={`grid size-5 place-items-center rounded-full border ${index < step ? "border-[var(--text)] bg-[var(--text)] text-[var(--background)]" : "border-[var(--border-strong)]"}`}>
-                {index < step ? <Check size={11} weight="bold" /> : index === step ? <span className="size-1.5 animate-pulse rounded-full bg-[var(--text)]" /> : null}
-              </span>
-              {label}
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function SourceIcon({ kind, size = 14 }: { kind: Evidence["kind"]; size?: number }) {
-  if (kind === "commit") return <GitBranch size={size} />;
-  if (kind === "codex") return <Code size={size} />;
-  if (kind === "screenshot") return <ImageIcon size={size} />;
-  return <NotePencil size={size} />;
-}
-
-function Inbox({ analysis, onSelect, onTimeline }: { analysis: AnalysisResult; onSelect: (moment: StoryMoment) => void; onTimeline: () => void }) {
-  return (
-    <main className="mx-auto max-w-4xl px-5 py-12 md:py-16">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-[-0.04em] md:text-4xl">You did enough today.</h1>
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">We found three moments worth sharing.</p>
-        </div>
-        <button className="button-secondary self-start" onClick={onTimeline}><Clock size={14} /> Timeline</button>
-      </div>
-
-      <section className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
-        {analysis.moments.map((moment, index) => {
-          const sources = analysis.evidence.filter((item) => moment.evidenceIds.includes(item.id));
-          return (
-            <motion.button
-              key={moment.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04, duration: 0.22 }}
-              className="group grid w-full gap-4 py-6 text-left transition-colors hover:bg-[var(--surface-subtle)] sm:grid-cols-[minmax(0,1fr)_auto] sm:px-4"
-              onClick={() => onSelect(moment)}
-            >
-              <div>
-                <p className="mb-2 text-[11px] font-medium text-[var(--text-tertiary)]">{moment.label}</p>
-                <h2 className="text-xl font-semibold tracking-[-0.025em]">{moment.title}</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">{moment.summary}</p>
-                <p className="mt-3 text-xs font-medium text-[var(--text)]">{moment.tension}</p>
-              </div>
-              <div className="flex items-center justify-between gap-6 sm:flex-col sm:items-end sm:justify-center">
-                <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]"><Paperclip size={12} /> {sources.length} {sources.length === 1 ? "source" : "sources"}</span>
-                <ArrowRight size={16} className="text-[var(--text-tertiary)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--text)]" />
-              </div>
-            </motion.button>
-          );
-        })}
-      </section>
-      <p className="mt-6 text-center text-xs text-[var(--text-tertiary)]">Choose the moment you want to tell.</p>
-    </main>
-  );
-}
-
-function Reflection({ moment, answers, setAnswers, onBack, onDraft }: { moment: StoryMoment; answers: [string, string]; setAnswers: (answers: [string, string]) => void; onBack: () => void; onDraft: () => void }) {
-  const [questionIndex, setQuestionIndex] = useState(answers[0] ? 1 : 0);
-  const currentAnswer = answers[questionIndex];
-  const canContinue = currentAnswer.trim().length >= 8;
-
-  function updateAnswer(value: string) {
-    const next: [string, string] = [...answers];
-    next[questionIndex] = value;
-    setAnswers(next);
-  }
-
-  return (
-    <main className="mx-auto max-w-2xl px-5 py-10 md:py-14">
-      <button className="button-ghost -ml-3 mb-8" onClick={onBack}><ArrowLeft size={14} /> Story Inbox</button>
+    <main className="wp-screen wp-catching">
       <section>
-        <div className="mb-10 border-b border-[var(--border)] pb-6">
-          <p className="text-[11px] font-medium text-[var(--text-tertiary)]">{moment.label}</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.035em] md:text-3xl">{moment.title}</h1>
-          <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{moment.whyItMatters}</p>
-        </div>
-
-        <div className="mb-5 flex items-center justify-between text-xs text-[var(--text-tertiary)]">
-          <span>Question {questionIndex + 1} of 2</span>
-          <span>Workprint will not invent your perspective.</span>
-        </div>
-        <label className="block text-xl font-medium leading-8 tracking-[-0.02em]" htmlFor="reflection-answer">
-          {moment.questions[questionIndex]}
-        </label>
-        <textarea
-          id="reflection-answer"
-          autoFocus
-          className="field mt-5 min-h-44 resize-y text-[15px] leading-7"
-          value={currentAnswer}
-          onChange={(event) => updateAnswer(event.target.value)}
-          placeholder="Answer in your own words"
-        />
-        <div className="mt-5 flex items-center justify-between">
-          {questionIndex === 1 ? <button className="button-ghost -ml-3" onClick={() => setQuestionIndex(0)}><ArrowLeft size={14} /> Previous</button> : <span />}
-          {questionIndex === 0 ? (
-            <button className="button-primary" disabled={!canContinue} onClick={() => setQuestionIndex(1)}>Next question <ArrowRight size={14} /></button>
-          ) : (
-            <button className="button-primary" disabled={!canContinue || answers[0].trim().length < 8} onClick={onDraft}>Build the story <ArrowRight size={14} /></button>
-          )}
-        </div>
+        <span className="wp-scan" aria-hidden="true"><i /><i /><i /></span>
+        <h1>Got it. I’m catching up.</h1>
+        <p>Looking through today’s work.</p>
       </section>
     </main>
   );
 }
 
-function DraftLoader({ moment }: { moment: StoryMoment }) {
+function Inbox({ onOpen }: { onOpen: (moment: Moment) => void }) {
   return (
-    <main className="mx-auto flex min-h-[calc(100dvh-56px)] max-w-xl items-center px-5 py-16">
-      <section className="w-full">
-        <div className="mb-7 flex items-center gap-3">
-          <span className="grid size-8 place-items-center rounded-[9px] bg-[var(--surface-subtle)]"><NotePencil size={15} /></span>
-          <span className="text-sm font-medium">Writing your story</span>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-[-0.03em]">Finding the clearest version.</h1>
-        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">Using “{moment.title}” and your answers, then checking each factual claim.</p>
-        <div className="mt-8 h-1 overflow-hidden rounded-full bg-[var(--surface-hover)]">
-          <motion.div className="h-full w-1/3 bg-[var(--text)]" animate={{ x: ["-100%", "300%"] }} transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }} />
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function EvidenceItem({ evidence }: { evidence: Evidence }) {
-  return (
-    <article className="border-b border-[var(--border)] py-4 last:border-0">
-      <div className="flex items-center justify-between text-[10px] text-[var(--text-tertiary)]">
-        <span className="flex items-center gap-1.5"><SourceIcon kind={evidence.kind} size={12} /> {evidence.kind}</span>
-        <span>{evidence.timestamp}</span>
+    <main className="wp-screen wp-inbox">
+      <div className="wp-inbox-heading">
+        <span className="wp-signal-rule" aria-hidden="true" />
+        <h1>Things worth sharing.</h1>
       </div>
-      <h3 className="mt-2 text-[13px] font-medium leading-5">{evidence.title}</h3>
-      <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">{evidence.excerpt}</p>
-      <p className="mt-2 font-mono text-[9px] text-[var(--text-tertiary)]">{evidence.reference}</p>
-    </article>
+      <section className="wp-moment-grid" aria-label="Drafts ready today">
+        {MOMENTS.map((moment, index) => (
+          <button className="wp-moment" type="button" key={moment.id} onClick={() => onOpen(moment)}>
+            <span className="wp-moment-index" aria-hidden="true">0{index + 1}</span>
+            <span className="wp-moment-copy">
+              <strong>{moment.title}</strong>
+              <small>{moment.summary}</small>
+            </span>
+            <span className="wp-open-draft">Open draft <ArrowRight size={14} weight="bold" /></span>
+          </button>
+        ))}
+      </section>
+    </main>
   );
 }
 
-function ProofDrawer({ draft, analysis, onClose }: { draft: StoryDraft; analysis: AnalysisResult; onClose: () => void }) {
-  const [activeClaim, setActiveClaim] = useState(draft.claims[0]?.id || "");
-  const active = draft.claims.find((claim) => claim.id === activeClaim);
-  const evidence = analysis.evidence.filter((item) => active?.evidenceIds.includes(item.id));
-
-  return (
-    <motion.div className="fixed inset-0 z-50 bg-black/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.aside
-        role="dialog"
-        aria-modal="true"
-        aria-label="Story proof"
-        className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-float)] md:p-6"
-        initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-7 flex items-center justify-between">
-          <div><h2 className="text-base font-semibold">Proof</h2><p className="mt-1 text-xs text-[var(--text-secondary)]">Evidence behind the factual claims.</p></div>
-          <button className="icon-button" onClick={onClose} aria-label="Close proof"><X size={15} /></button>
-        </div>
-        <div className="space-y-2">
-          {draft.claims.map((claim) => (
-            <button key={claim.id} className={`w-full rounded-[10px] border p-3 text-left text-xs leading-5 ${activeClaim === claim.id ? "border-[var(--text)] bg-[var(--surface-subtle)]" : "border-[var(--border)] hover:bg-[var(--surface-subtle)]"}`} onClick={() => setActiveClaim(claim.id)}>
-              {claim.text}
-              <span className="mt-1.5 block text-[10px] text-[var(--text-tertiary)]">{claim.evidenceIds.length} {claim.evidenceIds.length === 1 ? "source" : "sources"}</span>
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 border-t border-[var(--border)]">
-          {evidence.map((item) => <EvidenceItem key={item.id} evidence={item} />)}
-        </div>
-      </motion.aside>
-    </motion.div>
-  );
+function PlatformIcon({ platform, size = 16 }: { platform: Platform; size?: number }) {
+  return platform === "x" ? <XLogo size={size} /> : <LinkedinLogo size={size} weight="fill" />;
 }
 
-function Studio({ draft, setDraft, analysis, onBack }: { draft: StoryDraft; setDraft: (draft: StoryDraft) => void; analysis: AnalysisResult; onBack: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const [proofOpen, setProofOpen] = useState(false);
-  const sourceCount = new Set(draft.claims.flatMap((claim) => claim.evidenceIds)).size;
-  const wordCount = draft.body.trim().split(/\s+/).filter(Boolean).length;
+function PostScreen({
+  moment,
+  platform,
+  draft,
+  editorVersion,
+  answer,
+  answerStatus,
+  messages,
+  onBack,
+  onPlatform,
+  onDraftInput,
+  onPost,
+  onProof,
+  onAnswer,
+  onUseAnswer,
+  onShorten,
+  onAngle,
+  onRevision,
+}: {
+  moment: Moment;
+  platform: Platform;
+  draft: string;
+  editorVersion: number;
+  answer: string;
+  answerStatus: string;
+  messages: RevisionMessage[];
+  onBack: () => void;
+  onPlatform: (platform: Platform) => void;
+  onDraftInput: (value: string) => void;
+  onPost: () => void;
+  onProof: () => void;
+  onAnswer: (value: string) => void;
+  onUseAnswer: () => void;
+  onShorten: () => void;
+  onAngle: () => void;
+  onRevision: (prompt: string) => void;
+}) {
+  const [revisionInput, setRevisionInput] = useState("");
+  const sourceCount = useMemo(() => new Set(moment.claims.flatMap((claim) => claim.evidenceIds)).size, [moment]);
+  const metric = platform === "x" ? `${draft.length} / 280 characters` : `${draft.trim().split(/\s+/).length} words`;
 
-  async function copyStory() {
-    await navigator.clipboard.writeText(`${draft.headline}\n\n${draft.body}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  }
-
-  function exportStory() {
-    const proof = draft.claims.map((claim) => `- ${claim.text}\n  Evidence: ${claim.evidenceIds.join(", ")}`).join("\n");
-    const blob = new Blob([`# ${draft.headline}\n\n${draft.body}\n\n## Proof\n\n${proof}\n`], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${analysis.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-story.md`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+  function submitRevision(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!revisionInput.trim()) return;
+    onRevision(revisionInput.trim());
+    setRevisionInput("");
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-8 md:py-10">
-      <div className="mb-10 flex flex-wrap items-center justify-between gap-3">
-        <button className="button-ghost -ml-3" onClick={onBack}><ArrowLeft size={14} /> Reflection</button>
-        <div className="flex items-center gap-2">
-          <button className="button-secondary" onClick={() => setProofOpen(true)}><ShieldCheck size={14} /> Proof ({sourceCount})</button>
-          <button className="icon-button" onClick={exportStory} aria-label="Export story"><DownloadSimple size={15} /></button>
-          <button className="button-primary" onClick={() => void copyStory()}>{copied ? <Check size={14} weight="bold" /> : <Copy size={14} />}{copied ? "Copied" : "Copy"}</button>
-        </div>
+    <main className="wp-screen wp-post-screen">
+      <div className="wp-post-toolbar">
+        <button className="wp-back" type="button" onClick={onBack}><ArrowLeft size={14} /> Things worth sharing</button>
+        <button className="wp-primary" type="button" onClick={onPost}><PlatformIcon platform={platform} /> Post on {platform === "x" ? "X" : "LinkedIn"}</button>
       </div>
 
-      <section className="mx-auto max-w-2xl">
-        <div className="mb-8 flex items-center justify-between text-[11px] text-[var(--text-tertiary)]">
-          <span>Story Studio</span>
-          <span>{wordCount} words</span>
+      <article className="wp-post-editor">
+        <div className="wp-platform-bar" aria-label="Choose social platform">
+          <span>Recommended for {moment.recommended === "x" ? "X" : "LinkedIn"}</span>
+          <div className="wp-platform-switch">
+            <button className={platform === "x" ? "is-active" : ""} type="button" aria-label="X (formerly Twitter)" aria-pressed={platform === "x"} onClick={() => onPlatform("x")}><XLogo size={17} /></button>
+            <button className={platform === "linkedin" ? "is-active" : ""} type="button" aria-label="LinkedIn" aria-pressed={platform === "linkedin"} onClick={() => onPlatform("linkedin")}><LinkedinLogo size={17} weight="fill" /></button>
+          </div>
+          <span className={platform === "x" && draft.length > 280 ? "is-over" : ""}>{metric}</span>
         </div>
-        <input
-          aria-label="Story headline"
-          className="mb-7 w-full border-0 bg-transparent text-3xl font-semibold tracking-[-0.045em] outline-none md:text-4xl"
-          value={draft.headline}
-          onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
-        />
-        <textarea
-          aria-label="Story body"
-          className="min-h-[620px] w-full resize-none border-0 bg-transparent text-[15px] leading-8 text-[var(--text)] outline-none"
-          value={draft.body}
-          onChange={(event) => setDraft({ ...draft, body: event.target.value })}
-        />
-      </section>
-      <AnimatePresence>{proofOpen && <ProofDrawer draft={draft} analysis={analysis} onClose={() => setProofOpen(false)} />}</AnimatePresence>
-    </main>
-  );
-}
 
-function TimelineDrawer({ analysis, onClose }: { analysis: AnalysisResult; onClose: () => void }) {
-  return (
-    <motion.div className="fixed inset-0 z-50 bg-black/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.aside role="dialog" aria-modal="true" aria-label="Private timeline" className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-float)] md:p-6" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} onClick={(event) => event.stopPropagation()}>
-        <div className="mb-8 flex items-start justify-between">
-          <div><h2 className="text-base font-semibold">Timeline</h2><p className="mt-1 text-xs text-[var(--text-secondary)]">{analysis.project.sourceSummary}</p></div>
-          <button className="icon-button" onClick={onClose} aria-label="Close timeline"><X size={15} /></button>
-        </div>
-        <div className="space-y-7">
-          {analysis.timeline.map((event) => {
-            const sources = analysis.evidence.filter((item) => event.evidenceIds.includes(item.id));
-            return (
-              <article key={event.id}>
-                <p className="text-[10px] text-[var(--text-tertiary)]">{event.date}</p>
-                <h3 className="mt-1.5 text-sm font-medium">{event.title}</h3>
-                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">{event.description}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {sources.map((source) => <span key={source.id} className="flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-subtle)] px-2 py-1 text-[10px] text-[var(--text-secondary)]"><SourceIcon kind={source.kind} size={11} /> {source.title}</span>)}
+        <section className="wp-draft-paper">
+          <div className="wp-draft-meta"><span>Draft</span><button type="button" onClick={onProof}>{sourceCount} sources</button></div>
+          <div
+            key={editorVersion}
+            className="wp-post-content"
+            contentEditable
+            suppressContentEditableWarning
+            role="textbox"
+            aria-label="Edit the post"
+            aria-multiline="true"
+            spellCheck
+            onInput={(event) => onDraftInput(event.currentTarget.innerText.replace(/\n{3,}/g, "\n\n"))}
+          >{draft}</div>
+        </section>
+
+        <section className="wp-personalize" aria-labelledby="personalize-title">
+          <div className="wp-personalize-heading">
+            <div><strong id="personalize-title">Make it yours</strong><span>· Optional</span></div>
+            <p>{moment.question}</p>
+          </div>
+          <div className="wp-personalize-form">
+            <label className="wp-sr-only" htmlFor="personal-answer">Answer the optional personalization question</label>
+            <input id="personal-answer" value={answer} onChange={(event) => onAnswer(event.target.value)} placeholder="A sentence is enough" />
+            <button className="wp-secondary" type="button" onClick={onUseAnswer}>Use it</button>
+          </div>
+          {answerStatus && <p className="wp-answer-status" aria-live="polite">{answerStatus}</p>}
+
+          <div className="wp-edit-tools">
+            <button type="button" onClick={onShorten}>Shorten</button><span>·</span>
+            <button type="button" onClick={onAngle}>Try another angle</button><span>·</span>
+            <details>
+              <summary>Ask Workprint…</summary>
+              <div className="wp-revision-inner">
+                <div className="wp-revision-shortcuts">
+                  <button type="button" onClick={() => onRevision("Make it more casual")}>More casual</button>
+                  <button type="button" onClick={() => onRevision("Add the technical detail")}>More technical</button>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-      </motion.aside>
-    </motion.div>
+                {messages.length > 0 && <div className="wp-revision-thread">{messages.map((message, index) => <div className={message.role === "You" ? "is-user" : "is-workprint"} key={`${message.role}-${index}`}><span>{message.role}</span><p>{message.text}</p></div>)}</div>}
+                <form className="wp-revision-form" onSubmit={submitRevision}>
+                  <label htmlFor="revision-input">Tell Workprint what to change</label>
+                  <div><input id="revision-input" value={revisionInput} onChange={(event) => setRevisionInput(event.target.value)} placeholder="Mention that I almost shipped the old flow" /><button className="wp-primary" type="submit">Rewrite</button></div>
+                </form>
+              </div>
+            </details>
+          </div>
+        </section>
+      </article>
+    </main>
   );
 }
 
-function ErrorNotice({ message, onClose }: { message: string; onClose: () => void }) {
+function ProofDrawer({ moment, onClose }: { moment: Moment; onClose: () => void }) {
+  const [activeClaim, setActiveClaim] = useState(moment.claims[0]?.id ?? "");
+  const claim = moment.claims.find((item) => item.id === activeClaim) ?? moment.claims[0];
+  const evidence = SAMPLE_ANALYSIS.evidence.filter((item) => claim?.evidenceIds.includes(item.id));
+
   return (
-    <div className="fixed bottom-4 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-start gap-3 rounded-[10px] border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-[var(--shadow-float)]" role="alert">
-      <X className="mt-0.5 shrink-0 text-[var(--danger)]" size={15} />
-      <div className="flex-1"><p className="text-xs font-medium">Workprint could not finish that step.</p><p className="mt-1 text-[11px] leading-5 text-[var(--text-secondary)]">{message}</p></div>
-      <button className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--text)]" onClick={onClose}>Dismiss</button>
+    <div className="wp-drawer-layer" role="presentation">
+      <button className="wp-drawer-backdrop" type="button" onClick={onClose} aria-label="Close proof" />
+      <aside className="wp-drawer" role="dialog" aria-modal="true" aria-labelledby="proof-title">
+        <header><div><h2 id="proof-title">Why this is true</h2><p>The work behind the factual claims.</p></div><button className="wp-close" type="button" onClick={onClose} aria-label="Close proof"><X size={18} /></button></header>
+        <div className="wp-claim-list">{moment.claims.map((item) => <button className={item.id === activeClaim ? "is-active" : ""} type="button" key={item.id} onClick={() => setActiveClaim(item.id)}><strong>{item.text}</strong><span>{item.evidenceIds.length} sources</span></button>)}</div>
+        <div className="wp-evidence-list">{evidence.map((item) => <article key={item.id}><div><span>{item.kind === "commit" ? <GithubLogo size={13} weight="fill" /> : item.kind === "codex" ? <OpenAiLogo size={13} /> : <NotePencil size={13} />} {item.kind === "commit" ? "Git commit" : item.kind === "codex" ? "Codex session" : "Product note"}</span><span>{item.timestamp}</span></div><h3>{item.title}</h3><p>{item.excerpt}</p></article>)}</div>
+      </aside>
+    </div>
+  );
+}
+
+function SettingsDrawer({ provider, apiKey, onProvider, onKey, onClose }: { provider: Provider; apiKey: string; onProvider: (provider: Provider) => void; onKey: (key: string) => void; onClose: () => void }) {
+  return (
+    <div className="wp-drawer-layer" role="presentation">
+      <button className="wp-drawer-backdrop" type="button" onClick={onClose} aria-label="Close settings" />
+      <aside className="wp-drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <header><div><h2 id="settings-title">What Workprint watches</h2><p>Connect it once. Change it whenever you need.</p></div><button className="wp-close" type="button" onClick={onClose} aria-label="Close settings"><X size={18} /></button></header>
+        <div className="wp-connection-list"><div><span className="wp-source-icon"><GithubLogo size={20} weight="fill" /></span><span><strong>GitHub</strong><small>Connected</small></span><Check size={16} className="wp-check" weight="bold" /></div><div><span className="wp-source-icon"><OpenAiLogo size={20} /></span><span><strong>Codex</strong><small>Connected</small></span><Check size={16} className="wp-check" weight="bold" /></div></div>
+        <section className="wp-ai-settings"><strong>AI for this demo</strong><p>Use either provider. The key stays in this browser.</p><div className="wp-provider-switch"><button className={provider === "openrouter" ? "is-active" : ""} type="button" onClick={() => onProvider("openrouter")}>OpenRouter</button><button className={provider === "google" ? "is-active" : ""} type="button" onClick={() => onProvider("google")}>Google AI Studio</button></div><label><span>{provider === "openrouter" ? "OpenRouter" : "Google AI Studio"} API key</span><input type="password" value={apiKey} onChange={(event) => onKey(event.target.value)} placeholder="Paste a demo key" /></label></section>
+        <button className="wp-primary wp-done" type="button" onClick={onClose}>Done</button>
+      </aside>
     </div>
   );
 }
 
 export function WorkprintApp() {
-  const [stage, setStage] = useState<Stage>("welcome");
-  const [projectName, setProjectName] = useState("");
-  const [sourceText, setSourceText] = useState("");
-  const [files, setFiles] = useState<SourceFile[]>([]);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [selectedMoment, setSelectedMoment] = useState<StoryMoment | null>(null);
-  const [answers, setAnswers] = useState<[string, string]>(["", ""]);
-  const [draft, setDraft] = useState<StoryDraft | null>(null);
-  const [demoMode, setDemoMode] = useState(false);
-  const [timelineOpen, setTimelineOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const sessionId = `workprint-${useId().replace(/[^a-z0-9]/gi, "")}`;
+  const [screen, setScreen] = useState<Screen>("setup");
+  const [connected, setConnected] = useState(false);
+  const [sources, setSources] = useState({ github: true, codex: true });
+  const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
+  const [platform, setPlatform] = useState<Platform>("x");
+  const [draft, setDraft] = useState("");
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [answerStatus, setAnswerStatus] = useState("");
+  const [messages, setMessages] = useState<RevisionMessage[]>([]);
+  const [proofOpen, setProofOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [provider, setProvider] = useState<Provider>("openrouter");
+  const [apiKey, setApiKey] = useState("");
+  const [toast, setToast] = useState("");
 
-  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [stage]);
-
-  function reset() {
-    setStage("welcome"); setProjectName(""); setSourceText(""); setFiles([]); setAnalysis(null); setSelectedMoment(null); setAnswers(["", ""]); setDraft(null); setDemoMode(false); setError(null);
+  function replaceDraft(value: string) {
+    setDraft(value.replace(/\n{3,}/g, "\n\n"));
+    setEditorVersion((version) => version + 1);
   }
 
-  async function runDemo() {
-    setDemoMode(true); setProjectName("Workprint"); setSourceText(SAMPLE_SOURCE); setStage("analyzing");
-    await wait(2600); setAnalysis(SAMPLE_ANALYSIS); setStage("inbox");
+  function goHome() {
+    setScreen(connected ? "inbox" : "setup");
   }
 
-  async function analyze() {
-    setStage("analyzing"); setError(null);
+  function connect() {
+    setConnected(true);
+    setScreen("catching-up");
+    window.setTimeout(() => setScreen("inbox"), 1250);
+  }
+
+  function openMoment(moment: Moment) {
+    setSelectedMoment(moment);
+    setPlatform(moment.recommended);
+    setAnswer("");
+    setAnswerStatus("");
+    setMessages([]);
+    replaceDraft(moment.drafts[moment.recommended]);
+    setScreen("post");
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function switchPlatform(nextPlatform: Platform) {
+    if (!selectedMoment) return;
+    setPlatform(nextPlatform);
+    setAnswerStatus("");
+    replaceDraft(selectedMoment.drafts[nextPlatform]);
+  }
+
+  function useAnswer() {
+    if (!selectedMoment || !answer.trim()) return;
+    const paragraphs = selectedMoment.drafts[platform].split(/\n\n+/);
+    const next = platform === "x"
+      ? [paragraphs[0], answer.trim(), paragraphs.at(-1) ?? ""].join("\n\n")
+      : [...paragraphs.slice(0, -1), `What made the decision clear was this: ${answer.trim()}`, paragraphs.at(-1) ?? ""].join("\n\n");
+    replaceDraft(next);
+    setAnswerStatus("Worked it into the draft.");
+  }
+
+  function shorten() {
+    const paragraphs = draft.split(/\n\n+/).filter(Boolean);
+    if (paragraphs.length <= 2) return;
+    replaceDraft([paragraphs[0], paragraphs.at(-1) ?? ""].join("\n\n"));
+    showToast("Shortened.");
+  }
+
+  function anotherAngle() {
+    if (!selectedMoment) return;
+    const paragraphs = draft.split(/\n\n+/).filter(Boolean);
+    paragraphs[0] = selectedMoment.alternateOpenings[platform];
+    replaceDraft(paragraphs.join("\n\n"));
+    showToast("Tried another angle.");
+  }
+
+  function revise(prompt: string) {
+    setMessages((current) => [...current, { role: "You", text: prompt }]);
+    window.setTimeout(() => {
+      const lower = prompt.toLowerCase();
+      if (lower.includes("casual")) replaceDraft(draft.replace(/^./, (character) => character.toLowerCase()));
+      if (lower.includes("short")) shorten();
+      setMessages((current) => [...current, { role: "Workprint", text: lower.includes("technical") ? "Kept the voice and made the product change more specific." : "Made the opening less polished and left the useful detail alone." }]);
+    }, 300);
+  }
+
+  async function postDraft() {
+    const destination = platform === "x" ? `https://x.com/intent/post?text=${encodeURIComponent(draft)}` : "https://www.linkedin.com/feed/?shareActive=true";
+    window.open(destination, "_blank", "noopener,noreferrer");
     try {
-      const screenshots = files.filter((file) => file.type === "image").map((file) => ({ name: file.name, dataUrl: file.content }));
-      const response = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectName, sourceText, screenshots, sessionId }) });
-      const result = await response.json() as AnalysisResult & { error?: string };
-      if (!response.ok) throw new Error(result.error || "The analysis request failed");
-      setAnalysis(result); setStage("inbox");
-    } catch (caught) {
-      setStage("source"); setError(caught instanceof Error ? caught.message : "Unknown analysis error");
+      await navigator.clipboard.writeText(draft);
+      showToast(platform === "x" ? "Copied and opened in X." : "Copied. LinkedIn is ready.");
+    } catch {
+      showToast(`Opened ${platform === "x" ? "X" : "LinkedIn"}.`);
     }
   }
 
-  function chooseMoment(moment: StoryMoment) { setSelectedMoment(moment); setAnswers(["", ""]); setStage("reflect"); }
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 1800);
+  }
 
-  async function buildDraft() {
-    if (!analysis || !selectedMoment) return;
-    setStage("drafting"); setError(null);
-    try {
-      if (demoMode) {
-        await wait(2300); setDraft(createSampleDraft(selectedMoment.id, answers)); setStage("studio"); return;
-      }
-      const relevantEvidence = analysis.evidence.filter((item) => selectedMoment.evidenceIds.includes(item.id));
-      const response = await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ moment: selectedMoment, evidence: relevantEvidence, answers, sessionId }) });
-      const result = await response.json() as StoryDraft & { error?: string };
-      if (!response.ok) throw new Error(result.error || "The drafting request failed");
-      setDraft(result); setStage("studio");
-    } catch (caught) {
-      setStage("reflect"); setError(caught instanceof Error ? caught.message : "Unknown drafting error");
-    }
+  function updateProvider(nextProvider: Provider) {
+    setProvider(nextProvider);
+    window.localStorage.setItem("workprint-ai-provider", nextProvider);
+    setApiKey(window.localStorage.getItem(`workprint-${nextProvider}-key`) ?? "");
+  }
+
+  function updateKey(value: string) {
+    setApiKey(value);
+    window.localStorage.setItem(`workprint-${provider}-key`, value);
   }
 
   return (
-    <div className="app-shell">
-      <Header stage={stage} project={analysis?.project.name || projectName} onReset={reset} />
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={stage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
-          {stage === "welcome" && <Welcome onDemo={() => void runDemo()} onStart={() => setStage("source")} />}
-          {stage === "source" && <SourceSetup projectName={projectName} setProjectName={setProjectName} sourceText={sourceText} setSourceText={setSourceText} files={files} setFiles={setFiles} onAnalyze={() => void analyze()} onDemo={() => void runDemo()} />}
-          {stage === "analyzing" && <AnalysisLoader project={projectName} />}
-          {stage === "inbox" && analysis && <Inbox analysis={analysis} onSelect={chooseMoment} onTimeline={() => setTimelineOpen(true)} />}
-          {stage === "reflect" && selectedMoment && <Reflection moment={selectedMoment} answers={answers} setAnswers={setAnswers} onBack={() => setStage("inbox")} onDraft={() => void buildDraft()} />}
-          {stage === "drafting" && selectedMoment && <DraftLoader moment={selectedMoment} />}
-          {stage === "studio" && draft && analysis && <Studio draft={draft} setDraft={setDraft} analysis={analysis} onBack={() => setStage("reflect")} />}
-        </motion.div>
-      </AnimatePresence>
-      <AnimatePresence>{timelineOpen && analysis && <TimelineDrawer analysis={analysis} onClose={() => setTimelineOpen(false)} />}</AnimatePresence>
-      <AnimatePresence>{error && <ErrorNotice message={error} onClose={() => setError(null)} />}</AnimatePresence>
+    <div className="wp-app">
+      <Header onHome={goHome} onProfile={() => setSettingsOpen(true)} />
+      {screen === "setup" && <Setup selected={sources} onToggle={(source) => setSources((current) => ({ ...current, [source]: !current[source as keyof typeof current] }))} onContinue={connect} />}
+      {screen === "catching-up" && <CatchingUp />}
+      {screen === "inbox" && <Inbox onOpen={openMoment} />}
+      {screen === "post" && selectedMoment && <PostScreen moment={selectedMoment} platform={platform} draft={draft} editorVersion={editorVersion} answer={answer} answerStatus={answerStatus} messages={messages} onBack={() => setScreen("inbox")} onPlatform={switchPlatform} onDraftInput={setDraft} onPost={() => void postDraft()} onProof={() => setProofOpen(true)} onAnswer={setAnswer} onUseAnswer={useAnswer} onShorten={shorten} onAngle={anotherAngle} onRevision={revise} />}
+      {proofOpen && selectedMoment && <ProofDrawer moment={selectedMoment} onClose={() => setProofOpen(false)} />}
+      {settingsOpen && <SettingsDrawer provider={provider} apiKey={apiKey} onProvider={updateProvider} onKey={updateKey} onClose={() => setSettingsOpen(false)} />}
+      {toast && <div className="wp-toast" role="status">{toast}</div>}
     </div>
   );
-}
-
-function wait(ms: number) { return new Promise((resolve) => setTimeout(resolve, ms)); }
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function readFile(file: File, dataUrl: boolean): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error);
-    if (dataUrl) reader.readAsDataURL(file); else reader.readAsText(file);
-  });
 }
