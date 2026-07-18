@@ -6,7 +6,7 @@ This repository is the demo-ready MVP built for the OpenAI Build Week Community 
 
 ## Demo
 
-[Watch the Workprint product demo](./demo%20vid.mp4)
+https://github.com/user-attachments/assets/23e39575-2fa2-40f1-aca2-fba5f4d36173
 
 ## The product loop
 
