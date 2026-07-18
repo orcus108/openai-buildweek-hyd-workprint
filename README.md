@@ -4,6 +4,10 @@ Workprint is a private story inbox for builders. It reconstructs a timeline from
 
 This repository is the demo-ready MVP built for the OpenAI Build Week Community Hackathon in Hyderabad.
 
+## Demo
+
+[Watch the Workprint product demo](./demo%20vid.mp4)
+
 ## The product loop
 
 1. Add a Git log, Codex export, work notes, and optional screenshots.
