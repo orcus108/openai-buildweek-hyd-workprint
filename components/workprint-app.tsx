@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  GitBranch,
   GithubLogo,
   LinkedinLogo,
   NotePencil,
@@ -11,10 +12,10 @@ import {
   X,
   XLogo,
 } from "@phosphor-icons/react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SAMPLE_ANALYSIS } from "@/lib/sample-data";
 
-type Screen = "setup" | "catching-up" | "inbox" | "post";
+type Screen = "setup" | "projects" | "catching-up" | "inbox" | "post";
 type Platform = "x" | "linkedin";
 type Provider = "openrouter" | "google";
 
@@ -39,6 +40,21 @@ interface RevisionMessage {
   role: "You" | "Workprint";
   text: string;
 }
+
+interface Project {
+  id: string;
+  name: string;
+  repo: string;
+  description: string;
+  activity: string;
+  branch: string;
+}
+
+const PROJECTS: Project[] = [
+  { id: "friday", name: "Friday", repo: "orcus108/friday", description: "Local macOS assistant that can see, listen, and act.", activity: "Updated 34 minutes ago", branch: "main" },
+  { id: "workprint", name: "Workprint", repo: "orcus108/openai-buildweek-hyd-workprint", description: "A story inbox for builders.", activity: "Updated just now", branch: "main" },
+  { id: "sakhi", name: "Sakhi", repo: "orcus108/sakhi", description: "AI companion for India's ASHA health workers.", activity: "Updated 12 June", branch: "main" },
+];
 
 const MOMENTS: Moment[] = [
   {
@@ -154,13 +170,38 @@ function Setup({ selected, onToggle, onContinue }: { selected: Record<string, bo
   );
 }
 
-function CatchingUp() {
+function ProjectPicker({ onSelect }: { onSelect: (project: Project) => void }) {
+  return (
+    <main className="wp-screen wp-projects">
+      <section className="wp-project-heading">
+        <span className="wp-github-connected"><GithubLogo size={16} weight="fill" /> GitHub connected</span>
+        <h1>What are you working on?</h1>
+        <p>Found three recent repositories.</p>
+      </section>
+      <section className="wp-project-list" aria-label="Recent GitHub repositories">
+        {PROJECTS.map((project) => (
+          <button type="button" className="wp-project-row" key={project.id} onClick={() => onSelect(project)}>
+            <span className="wp-repo-icon"><GithubLogo size={21} weight="fill" /></span>
+            <span className="wp-project-copy">
+              <span><strong>{project.name}</strong><small>{project.repo}</small></span>
+              <p>{project.description}</p>
+              <span className="wp-project-meta"><span><GitBranch size={13} /> {project.branch}</span><span>{project.activity}</span></span>
+            </span>
+            <ArrowRight size={17} weight="bold" />
+          </button>
+        ))}
+      </section>
+    </main>
+  );
+}
+
+function CatchingUp({ project }: { project: Project | null }) {
   return (
     <main className="wp-screen wp-catching">
       <section>
         <span className="wp-scan" aria-hidden="true"><i /><i /><i /></span>
         <h1>Got it. I’m catching up.</h1>
-        <p>Looking through today’s work.</p>
+        <p>Looking through {project?.name || "today’s work"}.</p>
       </section>
     </main>
   );
@@ -201,6 +242,7 @@ function PostScreen({
   answer,
   answerStatus,
   messages,
+  isRewriting,
   onBack,
   onPlatform,
   onDraftInput,
@@ -219,6 +261,7 @@ function PostScreen({
   answer: string;
   answerStatus: string;
   messages: RevisionMessage[];
+  isRewriting: boolean;
   onBack: () => void;
   onPlatform: (platform: Platform) => void;
   onDraftInput: (value: string) => void;
@@ -292,13 +335,13 @@ function PostScreen({
               <summary>Ask Workprint…</summary>
               <div className="wp-revision-inner">
                 <div className="wp-revision-shortcuts">
-                  <button type="button" onClick={() => onRevision("Make it more casual")}>More casual</button>
-                  <button type="button" onClick={() => onRevision("Add the technical detail")}>More technical</button>
+                  <button type="button" disabled={isRewriting} onClick={() => onRevision("Make it more casual")}>More casual</button>
+                  <button type="button" disabled={isRewriting} onClick={() => onRevision("Add the technical detail")}>More technical</button>
                 </div>
                 {messages.length > 0 && <div className="wp-revision-thread">{messages.map((message, index) => <div className={message.role === "You" ? "is-user" : "is-workprint"} key={`${message.role}-${index}`}><span>{message.role}</span><p>{message.text}</p></div>)}</div>}
                 <form className="wp-revision-form" onSubmit={submitRevision}>
                   <label htmlFor="revision-input">Tell Workprint what to change</label>
-                  <div><input id="revision-input" value={revisionInput} onChange={(event) => setRevisionInput(event.target.value)} placeholder="Mention that I almost shipped the old flow" /><button className="wp-primary" type="submit">Rewrite</button></div>
+                  <div><input id="revision-input" value={revisionInput} disabled={isRewriting} onChange={(event) => setRevisionInput(event.target.value)} placeholder="Mention that I almost shipped the old flow" /><button className="wp-primary" type="submit" disabled={isRewriting}>{isRewriting ? "Rewriting…" : "Rewrite"}</button></div>
                 </form>
               </div>
             </details>
@@ -344,6 +387,7 @@ export function WorkprintApp() {
   const [screen, setScreen] = useState<Screen>("setup");
   const [connected, setConnected] = useState(false);
   const [sources, setSources] = useState({ github: true, codex: true });
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
   const [platform, setPlatform] = useState<Platform>("x");
   const [draft, setDraft] = useState("");
@@ -351,11 +395,22 @@ export function WorkprintApp() {
   const [answer, setAnswer] = useState("");
   const [answerStatus, setAnswerStatus] = useState("");
   const [messages, setMessages] = useState<RevisionMessage[]>([]);
+  const [isRewriting, setIsRewriting] = useState(false);
   const [proofOpen, setProofOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [provider, setProvider] = useState<Provider>("openrouter");
   const [apiKey, setApiKey] = useState("");
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const savedProvider = window.localStorage.getItem("workprint-ai-provider");
+      const initialProvider: Provider = savedProvider === "google" ? "google" : "openrouter";
+      setProvider(initialProvider);
+      setApiKey(window.localStorage.getItem(`workprint-${initialProvider}-key`) ?? "");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   function replaceDraft(value: string) {
     setDraft(value.replace(/\n{3,}/g, "\n\n"));
@@ -363,11 +418,16 @@ export function WorkprintApp() {
   }
 
   function goHome() {
-    setScreen(connected ? "inbox" : "setup");
+    setScreen(connected ? selectedProject ? "inbox" : "projects" : "setup");
   }
 
   function connect() {
     setConnected(true);
+    setScreen("projects");
+  }
+
+  function selectProject(project: Project) {
+    setSelectedProject(project);
     setScreen("catching-up");
     window.setTimeout(() => setScreen("inbox"), 1250);
   }
@@ -415,14 +475,27 @@ export function WorkprintApp() {
     showToast("Tried another angle.");
   }
 
-  function revise(prompt: string) {
+  async function revise(prompt: string) {
+    if (isRewriting) return;
     setMessages((current) => [...current, { role: "You", text: prompt }]);
-    window.setTimeout(() => {
-      const lower = prompt.toLowerCase();
-      if (lower.includes("casual")) replaceDraft(draft.replace(/^./, (character) => character.toLowerCase()));
-      if (lower.includes("short")) shorten();
-      setMessages((current) => [...current, { role: "Workprint", text: lower.includes("technical") ? "Kept the voice and made the product change more specific." : "Made the opening less polished and left the useful detail alone." }]);
-    }, 300);
+    setIsRewriting(true);
+    try {
+      const response = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, apiKey: apiKey || undefined, draft, instruction: prompt, platform }),
+      });
+      const result = await response.json() as { draft?: string; error?: string };
+      if (!response.ok || !result.draft) throw new Error(result.error || "Workprint could not rewrite that draft.");
+      replaceDraft(result.draft);
+      setMessages((current) => [...current, { role: "Workprint", text: "Done. I kept the facts and worked that into the draft." }]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Workprint could not reach the model.";
+      setMessages((current) => [...current, { role: "Workprint", text: message }]);
+      if (message.toLowerCase().includes("key")) setSettingsOpen(true);
+    } finally {
+      setIsRewriting(false);
+    }
   }
 
   async function postDraft() {
@@ -456,9 +529,10 @@ export function WorkprintApp() {
     <div className="wp-app">
       <Header onHome={goHome} onProfile={() => setSettingsOpen(true)} />
       {screen === "setup" && <Setup selected={sources} onToggle={(source) => setSources((current) => ({ ...current, [source]: !current[source as keyof typeof current] }))} onContinue={connect} />}
-      {screen === "catching-up" && <CatchingUp />}
+      {screen === "projects" && <ProjectPicker onSelect={selectProject} />}
+      {screen === "catching-up" && <CatchingUp project={selectedProject} />}
       {screen === "inbox" && <Inbox onOpen={openMoment} />}
-      {screen === "post" && selectedMoment && <PostScreen moment={selectedMoment} platform={platform} draft={draft} editorVersion={editorVersion} answer={answer} answerStatus={answerStatus} messages={messages} onBack={() => setScreen("inbox")} onPlatform={switchPlatform} onDraftInput={setDraft} onPost={() => void postDraft()} onProof={() => setProofOpen(true)} onAnswer={setAnswer} onUseAnswer={useAnswer} onShorten={shorten} onAngle={anotherAngle} onRevision={revise} />}
+      {screen === "post" && selectedMoment && <PostScreen moment={selectedMoment} platform={platform} draft={draft} editorVersion={editorVersion} answer={answer} answerStatus={answerStatus} messages={messages} isRewriting={isRewriting} onBack={() => setScreen("inbox")} onPlatform={switchPlatform} onDraftInput={setDraft} onPost={() => void postDraft()} onProof={() => setProofOpen(true)} onAnswer={setAnswer} onUseAnswer={useAnswer} onShorten={shorten} onAngle={anotherAngle} onRevision={(prompt) => void revise(prompt)} />}
       {proofOpen && selectedMoment && <ProofDrawer moment={selectedMoment} onClose={() => setProofOpen(false)} />}
       {settingsOpen && <SettingsDrawer provider={provider} apiKey={apiKey} onProvider={updateProvider} onKey={updateKey} onClose={() => setSettingsOpen(false)} />}
       {toast && <div className="wp-toast" role="status">{toast}</div>}
