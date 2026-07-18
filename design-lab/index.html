@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Workprint Design Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <button class="brand" id="brand-button" type="button" aria-label="Open Workprint home">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span class="brand-name">workprint</span>
+        </button>
+        <button class="profile-button" id="profile-button" type="button" aria-label="Open profile and settings" title="Profile and settings">
+          <span aria-hidden="true">V</span>
+        </button>
+      </header>
+
+      <main id="app-main">
+        <section class="screen setup-screen" data-screen="setup" aria-labelledby="setup-title">
+          <div class="setup-copy">
+            <span class="signal-rule" aria-hidden="true"></span>
+            <h1 id="setup-title">Your next post is already in your work.</h1>
+            <p>Workprint finds it for you.</p>
+          </div>
+
+          <div class="source-picker" aria-label="Work sources found">
+            <div class="source-intro">
+              <p>Ready to connect</p>
+              <span>Both were found on this device.</span>
+            </div>
+
+            <button class="source-row" type="button" aria-pressed="true">
+              <span class="source-monogram"><img class="source-logo is-monochrome" src="https://cdn.simpleicons.org/github/181717" alt="" /></span>
+              <span class="source-copy">
+                <strong>GitHub</strong>
+                <small>Commits and pull requests</small>
+              </span>
+              <span class="source-check" aria-hidden="true">✓</span>
+            </button>
+
+            <button class="source-row" type="button" aria-pressed="true">
+              <span class="source-monogram"><img class="source-logo is-monochrome" src="https://cdn.jsdelivr.net/npm/simple-icons@14.15.0/icons/openai.svg" alt="" /></span>
+              <span class="source-copy">
+                <strong>Codex</strong>
+                <small>Sessions and decisions</small>
+              </span>
+              <span class="source-check" aria-hidden="true">✓</span>
+            </button>
+
+            <button class="primary-button connect-button" id="connect-button" type="button">
+              Connect and continue <span aria-hidden="true">→</span>
+            </button>
+            <button class="text-button" id="other-source-button" type="button">Use something else</button>
+          </div>
+        </section>
+
+        <section class="screen catchup-screen" data-screen="catchup" aria-labelledby="catchup-title" hidden>
+          <div class="catchup-content">
+            <span class="signal-scan" aria-hidden="true"><span></span><span></span><span></span></span>
+            <h1 id="catchup-title">Got it. I’m catching up.</h1>
+            <p id="catchup-copy">Looking through today’s work.</p>
+          </div>
+        </section>
+
+        <section class="screen today-screen" data-screen="today" aria-labelledby="today-title" hidden>
+          <div class="today-heading">
+            <span class="signal-rule" aria-hidden="true"></span>
+            <h1 id="today-title">Things worth sharing.</h1>
+          </div>
+
+          <div class="moment-list" aria-label="Posts ready today">
+            <button class="moment-row" type="button" data-moment="prompt" data-platform="twitter">
+              <span class="moment-index" aria-hidden="true">01</span>
+              <span class="moment-copy">
+                <strong>The story inbox replaced the blank composer.</strong>
+                <small>A commit, a Codex session, and a product note all point to the same change.</small>
+              </span>
+              <span class="moment-action">Open draft <span aria-hidden="true">→</span></span>
+            </button>
+
+            <button class="moment-row" type="button" data-moment="boundary" data-platform="linkedin">
+              <span class="moment-index" aria-hidden="true">02</span>
+              <span class="moment-copy">
+                <strong>Evidence now survives every rewrite.</strong>
+                <small>Generated claims can be traced back to the work that produced them.</small>
+              </span>
+              <span class="moment-action">Open draft <span aria-hidden="true">→</span></span>
+            </button>
+
+            <button class="moment-row" type="button" data-moment="complexity" data-platform="twitter">
+              <span class="moment-index" aria-hidden="true">03</span>
+              <span class="moment-copy">
+                <strong>The onboarding lost three screens.</strong>
+                <small>GitHub and Codex are detected once. After that, Workprint stays out of the way.</small>
+              </span>
+              <span class="moment-action">Open draft <span aria-hidden="true">→</span></span>
+            </button>
+          </div>
+
+        </section>
+
+        <section class="screen post-screen" data-screen="post" aria-label="Post draft" hidden>
+          <div class="post-toolbar">
+            <button class="back-button" id="back-button" type="button"><span aria-hidden="true">←</span> Things worth sharing</button>
+            <div class="post-actions">
+              <button class="primary-button" id="copy-button" type="button"><img class="button-logo button-logo-invert" src="https://cdn.simpleicons.org/x/ffffff" alt="" />Post on X</button>
+            </div>
+          </div>
+
+          <article class="post-editor">
+            <div class="platform-bar" aria-label="Choose social platform">
+              <span id="recommendation-copy">Recommended:</span>
+              <div class="platform-switch">
+                <button class="platform-button is-active" type="button" data-platform="twitter" aria-label="X (formerly Twitter)" title="X (formerly Twitter)" aria-pressed="true"><img class="platform-logo is-monochrome" src="https://cdn.simpleicons.org/x/181818" alt="" /></button>
+                <button class="platform-button" type="button" data-platform="linkedin" aria-label="LinkedIn" title="LinkedIn" aria-pressed="false"><img class="platform-logo linkedin-logo" src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/svgs/brands/linkedin.svg" alt="" /></button>
+              </div>
+              <span class="platform-fit" id="platform-fit">Fits in one post</span>
+            </div>
+
+            <div class="draft-paper">
+              <div class="post-meta">
+                <span class="draft-label">Draft</span>
+                <button class="source-proof" id="proof-button" type="button">4 sources</button>
+              </div>
+
+              <div class="post-content" id="post-content" contenteditable="true" role="textbox" aria-label="Edit the post" aria-multiline="true" spellcheck="true">
+                <h1 id="post-title">We deleted the prompt box.</h1>
+                <div class="post-body" id="post-body">
+                  <p>We started building Workprint as a better way to write build-in-public posts.</p>
+                  <p>The first version looked familiar: give AI a pile of work, then ask it to turn that pile into content. It looked reasonable. It was also incomplete.</p>
+                  <p>The blank prompt was making builders do the hardest part all over again: figure out what mattered.</p>
+                  <p>So we removed it. Workprint now reads the evidence your work already leaves behind and brings back a few things worth talking about.</p>
+                  <p>The result isn’t five generic posts. It’s one story that could only belong to the person who did the work.</p>
+                </div>
+              </div>
+            </div>
+
+            <section class="revision-panel" aria-labelledby="personalize-title">
+              <div class="personalize-heading">
+                <div class="personalize-title-row">
+                  <strong id="personalize-title">Make it yours</strong>
+                  <span>· Optional</span>
+                </div>
+                <p id="personalize-question">What made you decide to remove the prompt box?</p>
+              </div>
+
+              <form class="personalize-form" id="personalize-form">
+                <label class="sr-only" for="personalize-input">Answer the optional personalization question</label>
+                <input id="personalize-input" type="text" autocomplete="off" placeholder="A sentence is enough" />
+                <button class="secondary-button" type="submit">Use it</button>
+              </form>
+              <p class="personalize-status" id="personalize-status" aria-live="polite" hidden></p>
+
+              <div class="edit-tools" aria-label="Other ways to edit">
+                <button id="shorter-button" type="button">Shorten</button>
+                <span aria-hidden="true">·</span>
+                <button id="angle-button" type="button">Try another angle</button>
+                <span aria-hidden="true">·</span>
+                <details class="revision-disclosure">
+                  <summary>Ask Workprint…</summary>
+                  <div class="revision-inner">
+                    <div class="revision-shortcuts" aria-label="Quick rewrite options">
+                      <button type="button" data-revision="Make it more casual">More casual</button>
+                      <button type="button" data-revision="Add the technical detail">More technical</button>
+                    </div>
+                    <div class="revision-thread" id="revision-thread" aria-live="polite" hidden></div>
+                    <form class="revision-form" id="revision-form">
+                      <label for="revision-input">Tell Workprint what to change</label>
+                      <div class="revision-composer">
+                        <input id="revision-input" type="text" autocomplete="off" placeholder="Mention that I almost shipped the old flow" />
+                        <button class="primary-button" type="submit">Rewrite</button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="screen quiet-screen" data-screen="quiet" aria-labelledby="quiet-title" hidden>
+          <div class="quiet-content">
+            <span class="quiet-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+            <h1 id="quiet-title">Nothing worth posting yet.</h1>
+            <p>That’s fine. I’ll keep watching.</p>
+            <button class="secondary-button" id="recent-button" type="button">See recent posts</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="drawer-layer" id="proof-layer" hidden>
+      <button class="drawer-backdrop" type="button" data-close-drawer aria-label="Close proof"></button>
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="proof-title">
+        <div class="drawer-header">
+          <div>
+            <h2 id="proof-title">Why this is true</h2>
+            <p>The work behind the factual claims.</p>
+          </div>
+          <button class="close-button" type="button" data-close-drawer aria-label="Close proof">×</button>
+        </div>
+
+        <div class="claim-list">
+          <button class="claim-row is-active" type="button" data-claim="direction">
+            <strong>The story inbox replaced the composer.</strong>
+            <span>3 sources</span>
+          </button>
+          <button class="claim-row" type="button" data-claim="evidence">
+            <strong>Every factual claim keeps its evidence.</strong>
+            <span>2 sources</span>
+          </button>
+          <button class="claim-row" type="button" data-claim="boundary">
+            <strong>The onboarding no longer needs project setup.</strong>
+            <span>2 sources</span>
+          </button>
+        </div>
+
+        <div class="evidence-list" id="evidence-list"></div>
+      </aside>
+    </div>
+
+    <div class="drawer-layer" id="settings-layer" hidden>
+      <button class="drawer-backdrop" type="button" data-close-drawer aria-label="Close connections"></button>
+      <aside class="drawer settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="drawer-header">
+          <div>
+            <h2 id="settings-title">What Workprint watches</h2>
+            <p>Connect it once. Change it whenever you need.</p>
+          </div>
+          <button class="close-button" type="button" data-close-drawer aria-label="Close connections">×</button>
+        </div>
+
+        <div class="connection-list">
+          <label class="connection-row">
+            <span class="source-monogram"><img class="source-logo is-monochrome" src="https://cdn.simpleicons.org/github/181717" alt="" /></span>
+            <span class="source-copy"><strong>GitHub</strong><small>Connected</small></span>
+            <input type="checkbox" checked aria-label="Watch GitHub" />
+          </label>
+          <label class="connection-row">
+            <span class="source-monogram"><img class="source-logo is-monochrome" src="https://cdn.jsdelivr.net/npm/simple-icons@14.15.0/icons/openai.svg" alt="" /></span>
+            <span class="source-copy"><strong>Codex</strong><small>Connected</small></span>
+            <input type="checkbox" checked aria-label="Watch Codex" />
+          </label>
+        </div>
+
+        <div class="demo-ai">
+          <div class="settings-section-copy">
+            <strong>AI for this demo</strong>
+            <p>Use either provider. The key stays in this browser.</p>
+          </div>
+          <div class="provider-switch" aria-label="Choose AI provider">
+            <button class="provider-button is-active" type="button" data-provider="openrouter" aria-pressed="true">OpenRouter</button>
+            <button class="provider-button" type="button" data-provider="google" aria-pressed="false">Google AI Studio</button>
+          </div>
+          <label class="key-field" for="api-key">
+            <span>API key</span>
+            <input id="api-key" type="password" autocomplete="off" placeholder="Paste a demo key" />
+          </label>
+          <button class="secondary-button save-key" id="save-key" type="button">Save demo key</button>
+        </div>
+
+        <div class="privacy-copy">
+          <strong>Your work stays private.</strong>
+          <p>Workprint never publishes anything without you.</p>
+        </div>
+
+        <button class="primary-button drawer-done" type="button" data-close-drawer>Done</button>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="./prototype.js"></script>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "name": "workprint",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "2.1.10",
+    "geist": "1.7.2",
+    "motion": "12.42.2",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.12",
+    "@types/node": "22.15.30",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.33.0",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "4.1.12",
+    "typescript": "5.9.2"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  }
+}

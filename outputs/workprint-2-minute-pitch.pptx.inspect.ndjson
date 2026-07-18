@@ -1,0 +1,75 @@
+{"kind":"deck","id":"pr/1vrg3b","name":"Deck"}
+{"kind":"layout","layoutId":"231c5027-3437-4c90-b096-4ed9e9ad1138","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"f08f64c6-f0de-47af-88e7-e1a1cbaae9ef","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/dt28u0","slide":1,"title":"W","textShapes":5}
+{"kind":"shape","id":"sh/j25cjmpk","slide":1,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/k3edcrqp","slide":1,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/l47ulw7a","slide":1,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/65gve18v","slide":1,"text":"Building is becoming\nabundant.","textPreview":"Building is becoming | abundant.","textChars":30,"textLines":2,"bbox":[68,170,1000,160]}
+{"kind":"textbox","id":"sh/76pcnmpg","slide":1,"text":"Attention is not.","textPreview":"Attention is not.","textChars":17,"textLines":1,"bbox":[68,360,700,88]}
+{"kind":"textbox","id":"sh/87ydgrq1","slide":1,"text":"OPENAI BUILD WEEK  ·  HYDERABAD","textPreview":"OPENAI BUILD WEEK  ·  HYDERABAD","textChars":31,"textLines":1,"bbox":[68,646,450,20]}
+{"kind":"shape","id":"sh/t87upw7m","slide":1,"bbox":[1132,604,84,84]}
+{"kind":"notes","id":"nt/dt28u0","slide":1,"text":"AI is making software easier to build than ever. But that changes what is scarce. When anyone can build, attention is the bottleneck."}
+{"kind":"slide","id":"sl/j6lpyr","slide":2,"title":"W","textShapes":12}
+{"kind":"shape","id":"sh/7a9wful0","slide":2,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/sbixoz2l","slide":2,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/tcbeh436","slide":2,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/udkfqpkr","slide":2,"text":"For builders before they\nare known, visibility matters.","textPreview":"For builders before they | are known, visibility matters.","textChars":55,"textLines":2,"bbox":[68,124,900,142]}
+{"kind":"shape","id":"sh/fetwjulc","slide":2,"bbox":[68,314,1144,2]}
+{"kind":"textbox","id":"sh/gf2xsz2x","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[68,362,80,26]}
+{"kind":"textbox","id":"sh/hgbel43i","slide":2,"text":"Feedback\nbefore launch.","textPreview":"Feedback | before launch.","textChars":23,"textLines":2,"bbox":[68,403,235,80]}
+{"kind":"textbox","id":"sh/2hkfu9k3","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[354,362,80,26]}
+{"kind":"textbox","id":"sh/3itwnel8","slide":2,"text":"Trust\nbefore purchase.","textPreview":"Trust | before purchase.","textChars":22,"textLines":2,"bbox":[354,403,235,80]}
+{"kind":"textbox","id":"sh/ryhw3y1s","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[640,362,80,26]}
+{"kind":"textbox","id":"sh/qx8vat07","slide":2,"text":"Proof\nbefore credentials.","textPreview":"Proof | before credentials.","textChars":25,"textLines":2,"bbox":[640,403,235,80]}
+{"kind":"textbox","id":"sh/d0ze58jy","slide":2,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[926,362,80,26]}
+{"kind":"textbox","id":"sh/szqdc3id","slide":2,"text":"Relationships\nbefore they need them.","textPreview":"Relationships | before they need them.","textChars":36,"textLines":2,"bbox":[926,403,235,80]}
+{"kind":"textbox","id":"sh/3axwzy1g","slide":2,"text":"Building in public lets you build the product and the audience at the same time.","textPreview":"Building in public lets you build the product and the audience at the same time.","textChars":80,"textLines":1,"bbox":[68,598,1060,36]}
+{"kind":"notes","id":"nt/j6lpyr","slide":2,"text":"For early-stage founders, indie hackers and ambitious students, building in public means feedback before launch, trust before purchase, proof before credentials, and relationships before they need them."}
+{"kind":"slide","id":"sl/rcfblq","slide":3,"title":"W","textShapes":8}
+{"kind":"shape","id":"sh/elcjihcz","slide":3,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/1o32dwva","slide":3,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/0nu1krup","slide":3,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/ry1k7md8","slide":3,"text":"But building in public\nbecomes another job.","textPreview":"But building in public | becomes another job.","textChars":43,"textLines":2,"bbox":[68,125,900,144]}
+{"kind":"textbox","id":"sh/qxsjehcn","slide":3,"text":"Decide what matters.","textPreview":"Decide what matters.","textChars":20,"textLines":1,"bbox":[102,350,600,32]}
+{"kind":"shape","id":"sh/d0j29wve","slide":3,"bbox":[68,365,18,2]}
+{"kind":"textbox","id":"sh/sza1grut","slide":3,"text":"Find the story.","textPreview":"Find the story.","textChars":15,"textLines":1,"bbox":[102,410,600,32]}
+{"kind":"shape","id":"sh/3u1k32dc","slide":3,"bbox":[68,425,18,2]}
+{"kind":"textbox","id":"sh/itsjaxcr","slide":3,"text":"Write the post.","textPreview":"Write the post.","textChars":15,"textLines":1,"bbox":[102,470,600,32]}
+{"kind":"shape","id":"sh/grmpcfut","slide":3,"bbox":[68,485,18,2]}
+{"kind":"textbox","id":"sh/1cvq5kve","slide":3,"text":"Do it again tomorrow.","textPreview":"Do it again tomorrow.","textChars":21,"textLines":1,"bbox":[102,530,600,32]}
+{"kind":"shape","id":"sh/epk7apcn","slide":3,"bbox":[68,545,18,2]}
+{"kind":"textbox","id":"sh/fqt83ad8","slide":3,"text":"while you are trying to ship the actual product.","textPreview":"while you are trying to ship the actual product.","textChars":48,"textLines":1,"bbox":[786,510,350,74]}
+{"kind":"notes","id":"nt/rcfblq","slide":3,"text":"But it becomes another job: decide what matters, find the story, write the post, and do it again tomorrow while you are trying to ship the actual product."}
+{"kind":"slide","id":"sl/dcekta","slide":4,"title":"W","textShapes":6}
+{"kind":"shape","id":"sh/svex83e1","slide":4,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/ru5wzixg","slide":4,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/6twf6dwv","slide":4,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/58nex8fq","slide":4,"text":"Today, every\ndeveloper gets a\ncommunications team.","textPreview":"Today, every | developer gets a | communications team.","textChars":50,"textLines":3,"bbox":[68,152,835,215]}
+{"kind":"textbox","id":"sh/47ux43e5","slide":4,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[68,483,280,42]}
+{"kind":"textbox","id":"sh/j6lwvyxk","slide":4,"text":"Your AI communications team for building in public.","textPreview":"Your AI communications team for building in public.","textChars":51,"textLines":1,"bbox":[68,535,590,36]}
+{"kind":"shape","id":"sh/i5cf2twz","slide":4,"bbox":[982,194,172,172]}
+{"kind":"textbox","id":"sh/p47y9sfu","slide":4,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[982,236,172,96]}
+{"kind":"notes","id":"nt/dcekta","slide":4,"text":"So we asked: what if every developer had a communications team? This is Workprint: your AI communications team for building in public."}
+{"kind":"slide","id":"sl/qypl95","slide":5,"title":"W","textShapes":7}
+{"kind":"shape","id":"sh/6lo7ap8j","slide":5,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/t8f6l47u","slide":5,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/876pczqp","slide":5,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/jidofups","slide":5,"text":"It finds the story\nhiding in the work.","textPreview":"It finds the story | hiding in the work.","textChars":38,"textLines":2,"bbox":[68,112,570,130]}
+{"kind":"textbox","id":"sh/yh4n6p87","slide":5,"text":"GitHub history  ·  Codex sessions  ·  progress","textPreview":"GitHub history  ·  Codex sessions  ·  progress","textChars":46,"textLines":1,"bbox":[68,270,520,26]}
+{"kind":"textbox","id":"sh/kjm58zqd","slide":5,"text":"Not ‘we added browser automation.’","textPreview":"Not ‘we added browser automation.’","textChars":34,"textLines":1,"bbox":[68,385,530,34]}
+{"kind":"textbox","id":"sh/bedobapw","slide":5,"text":"“AI assistants look intelligent\nuntil you ask them to complete\nan ordinary, messy task.”","textPreview":"“AI assistants look intelligent | until you ask them to complete | an ordinary, messy task.”","textChars":88,"textLines":3,"bbox":[68,432,535,118]}
+{"kind":"textbox","id":"sh/ad4n258b","slide":5,"text":"A story people care about—already grounded in the work.","textPreview":"A story people care about—already grounded in the work.","textChars":55,"textLines":1,"bbox":[68,620,540,30]}
+{"kind":"image","id":"im/krmx4je9","slide":5,"name":"","geometry":"roundRect","alt":"Workprint Story Inbox","bbox":[676,92,536,501]}
+{"kind":"notes","id":"nt/qypl95","slide":5,"text":"Workprint looks at GitHub history, Codex sessions and project progress. It finds a moment worth sharing. Instead of ‘we added browser automation,’ it finds the real story: AI assistants look intelligent until you ask them to complete an ordinary, messy task."}
+{"kind":"slide","id":"sl/p4rz13","slide":6,"title":"W","textShapes":7}
+{"kind":"shape","id":"sh/atwja1cn","slide":6,"bbox":[64,42,28,28]}
+{"kind":"textbox","id":"sh/xw72lgve","slide":6,"text":"W","textPreview":"W","textChars":1,"textLines":1,"bbox":[64,45,28,20]}
+{"kind":"textbox","id":"sh/cve1cbut","slide":6,"text":"Workprint","textPreview":"Workprint","textChars":9,"textLines":1,"bbox":[104,43,160,24]}
+{"kind":"textbox","id":"sh/zypkn6dk","slide":6,"text":"Build the product.","textPreview":"Build the product.","textChars":18,"textLines":1,"bbox":[68,172,1050,78]}
+{"kind":"textbox","id":"sh/yxg3elcz","slide":6,"text":"Build the audience.","textPreview":"Build the audience.","textChars":19,"textLines":1,"bbox":[68,260,1050,78]}
+{"kind":"textbox","id":"sh/l072pgva","slide":6,"text":"From the same work.","textPreview":"From the same work.","textChars":19,"textLines":1,"bbox":[68,348,800,78]}
+{"kind":"shape","id":"sh/kzylgbu5","slide":6,"bbox":[68,500,240,3]}
+{"kind":"textbox","id":"sh/72pkrqdg","slide":6,"text":"Workprint handles the archaeology and first draft.\nYou bring the judgment.","textPreview":"Workprint handles the archaeology and first draft. | You bring the judgment.","textChars":74,"textLines":2,"bbox":[68,535,700,56]}
+{"kind":"textbox","id":"sh/m1g3ilcv","slide":6,"text":"workprint","textPreview":"workprint","textChars":9,"textLines":1,"bbox":[1050,650,166,20]}
+{"kind":"notes","id":"nt/p4rz13","slide":6,"text":"Workprint does not manufacture content or pretend to be your voice. It handles the archaeology and first draft. You bring the judgment. Builders should not have to choose between building their product and building the audience that will make it matter."}
